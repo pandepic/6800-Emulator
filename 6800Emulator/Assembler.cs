@@ -49,7 +49,7 @@ namespace _6800Emulator
             }
 
             //List<InstructionInfo> instructionsUsed = new List<InstructionInfo>();
-            
+
             firstPass(source);
             secondPass(source);
         }
@@ -82,13 +82,13 @@ namespace _6800Emulator
                 }
 
                 // line is labelled
-                if (! source[i].StartsWith(" "))
+                if (!source[i].StartsWith(" "))
                 {
                     // is the label the same as an instruction mnemonic
-                    if (! instructionDatabase.isInstruction(thisLine[0]))
+                    if (!instructionDatabase.isInstruction(thisLine[0]))
                     {
                         // is the label already in the symbol table
-                        if (! symbolTable.ContainsKey(thisLine[0]))
+                        if (!symbolTable.ContainsKey(thisLine[0]))
                         {
                             UInt16 labelAddress = programCounter;
 
@@ -118,7 +118,7 @@ namespace _6800Emulator
                 // if there is only  label on the line
                 if (instructionPosition >= thisLine.Count())
                     continue;
-                
+
                 // if line defines a constant, see above
                 if (thisLine[instructionPosition].ToUpper() == ".EQU")
                     continue;
@@ -129,8 +129,8 @@ namespace _6800Emulator
                     programCounter++;
                     continue;
                 }
-                
-                
+
+
 
                 InstructionInfo instruction;
                 if (instructionCache.TryGetValue(currentLine, out instruction))
@@ -196,9 +196,9 @@ namespace _6800Emulator
                             memoryManager.setValueAt(programCounter++, firstByte);
                             memoryManager.setValueAt(programCounter++, secondByte);
                             break;
-                    } 
+                    }
                 }
-                
+
             }
         }
 
@@ -278,6 +278,18 @@ namespace _6800Emulator
             return -1;
         }
 
+        private Dictionary<string, bool> directNotSupported = new Dictionary<string, bool>(new Dictionary<string, bool>
+            {
+                ["JMP"] = false
+            ,   ["COM"] = false
+            ,   ["NEG"] = false
+            ,   ["ROL"] = false
+            ,   ["ROR"] = false
+            ,   ["ASL"] = false
+            ,   ["ASR"] = false
+            ,   ["LSR"] = false
+            });
+
         private AddressingMode getAddressMode(string[] thisLine)
         {
             AddressingMode mode;
@@ -310,18 +322,27 @@ namespace _6800Emulator
                 else // direct or extended
                 {
                     UInt16 operand = evaluateExpression16(thisLine[2]);
-                    if (thisLine[1] != "JMP")
-                    {
-                        if (operand > 0xFF)
-                            mode = AddressingMode.Extended;
-                        else mode = AddressingMode.Direct;
-                    }
+                    if (operand > 0xFF)
+                        mode = AddressingMode.Extended;
                     else
                     {
-                        // we have already determined it is not indexed - sp make it extended since
-                        // JMP does not have a direct addressing mode
+                        // make sure this is an opcode that supports direct addressing mode
+                        // The following do not:
+                        //
+                        //      JMP, COM, NEG, ROL, ROR, ASL, ASR and LSR
 
-                        mode = AddressingMode.Extended;
+                        if (!directNotSupported.ContainsKey(thisLine[1]))
+                        {
+                            mode = AddressingMode.Direct;
+                        }
+                        else
+                        {
+                            // we have already determined it is not indexed - so make it extended
+                            // since JMP, COM, NEG, ROL, ROR, ASL, ASR and LSR do not have a
+                            // direct addressing mode - only extended and indexed
+
+                            mode = AddressingMode.Extended;
+                        }
                     }
                 }
             }
