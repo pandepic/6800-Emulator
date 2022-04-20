@@ -310,9 +310,19 @@ namespace _6800Emulator
                 else // direct or extended
                 {
                     UInt16 operand = evaluateExpression16(thisLine[2]);
-                    if (operand > 0xFF)
+                    if (thisLine[1] != "JMP")
+                    {
+                        if (operand > 0xFF)
+                            mode = AddressingMode.Extended;
+                        else mode = AddressingMode.Direct;
+                    }
+                    else
+                    {
+                        // we have already determined it is not indexed - sp make it extended since
+                        // JMP does not have a direct addressing mode
+
                         mode = AddressingMode.Extended;
-                    else mode = AddressingMode.Direct;
+                    }
                 }
             }
             return mode;
