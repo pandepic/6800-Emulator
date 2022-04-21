@@ -3,10 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
+using System.IO;
+
 namespace _6800Emulator
 {
     static class Program
     {
+        public static string currentlyOpenFileName = "";
+
         /// <summary>
         /// The main entry point for the application.
         /// </summary>
